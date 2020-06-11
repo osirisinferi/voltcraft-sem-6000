@@ -19,18 +19,27 @@ class SEM6000():
         self.authorize()
 
     def authorize(self):
-        authorize_command = self._create_authorize_command()
-        self._characteristics.write(authorize_command)
-        self._peripheral.waitForNotifications(self.timeout)
+        command = self._create_authorize_command()
+        self._send_command(command)
 
     def power_on(self):
-        poweron_command = self._create_power_on_command()
-        self._characteristics.write(poweron_command)
-        self._peripheral.waitForNotifications(self.timeout)
+        command = self._create_power_on_command()
+        self._send_command(command)
 
     def power_off(self):
-        poweroff_command = self._create_power_off_command()
-        self._characteristics.write(poweroff_command)
+        command = self._create_power_off_command()
+        self._send_command(command)
+
+    def led_on(self):
+        command = self._create_led_on_command()
+        self._send_command(command)
+
+    def led_off(self):
+        command = self._create_led_off_command()
+        self._send_command(command)
+
+    def _send_command(self, command):
+        self._characteristics.write(command)
         self._peripheral.waitForNotifications(self.timeout)
 
     def _create_command_message(self, payload):
@@ -52,12 +61,25 @@ class SEM6000():
         
     def _create_power_off_command(self):
         return self._create_command_message(b'\x03\x00\x00' + b'\x00\x00')
+
+    def _create_led_on_command(self):
+        return self._create_command_message(b'\x0f\x00\x05\x01' + b'\x00\x00\x00\x00')
  
+    def _create_led_off_command(self):
+        return self._create_command_message(b'\x0f\x00\x05\x00' + b'\x00\x00\x00\x00')
+
+
 if __name__ == '__main__':
     deviceAddr = sys.argv[1]
     pin = sys.argv[2]
+    cmd = sys.argv[3]
 
     sem6000 = SEM6000(deviceAddr, pin)
-    sem6000.power_off()
-    sem6000.power_on()
-    pass
+    if cmd == 'power_on':
+        sem6000.power_on()
+    if cmd == 'power_off':
+        sem6000.power_off()
+    if cmd == 'led_on':
+        sem6000.led_on()
+    if cmd == 'led_off':
+        sem6000.led_off()
