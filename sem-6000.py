@@ -18,6 +18,27 @@ class SEM6000():
 
         self.authorize()
 
+    def discover(timeout=10):
+        result = []
+
+        scanner = btle.Scanner()
+        scanner_results = scanner.scan(timeout)
+        
+        for device in scanner_results:
+            address = device.addr
+            # 0x02 - query "Incomplete List of 16-bit Service Class UUIDs"
+            service_class_uuids = device.getValueText(2)
+            # 0x09 - query complete local name
+            complete_local_name = device.getValueText(9)
+
+            if not service_class_uuids == "0000fff0-0000-1000-8000-00805f9b34fb":
+                # not a sem6000 device
+                continue
+
+            result.append({'address': address, 'name': complete_local_name})
+
+        return result
+
     def authorize(self):
         command = self._create_authorize_command()
         self._send_command(command)
@@ -70,16 +91,22 @@ class SEM6000():
 
 
 if __name__ == '__main__':
-    deviceAddr = sys.argv[1]
-    pin = sys.argv[2]
-    cmd = sys.argv[3]
+    if len(sys.argv) == 1:
+        devices = SEM6000.discover()
+        for device in devices:
+            print(device)
+    else:
+        deviceAddr = sys.argv[1]
+        pin = sys.argv[2]
+        cmd = sys.argv[3]
 
-    sem6000 = SEM6000(deviceAddr, pin)
-    if cmd == 'power_on':
-        sem6000.power_on()
-    if cmd == 'power_off':
-        sem6000.power_off()
-    if cmd == 'led_on':
-        sem6000.led_on()
-    if cmd == 'led_off':
-        sem6000.led_off()
+        sem6000 = SEM6000(deviceAddr, pin)
+        if cmd == 'power_on':
+            sem6000.power_on()
+        if cmd == 'power_off':
+            sem6000.power_off()
+        if cmd == 'led_on':
+            sem6000.led_on()
+        if cmd == 'led_off':
+            sem6000.led_off()
+
