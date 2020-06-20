@@ -3,6 +3,22 @@
 import sys
 from bluepy import btle
 
+class SEM6000Delegate(btle.DefaultDelegate):
+    def handleNotification(self, cHandle, data):
+        print("received data from handle " + str(cHandle) + ": " + str(data), file=sys.stderr)
+
+    def handleDiscovery(self, scanEntry, isNewDev, isNewData):
+        address = scanEntry.addr
+        # 0x02 - query "Incomplete List of 16-bit Service Class UUIDs"
+        service_class_uuids = scanEntry.getValueText(2)
+        # 0x09 - query complete local name
+        complete_local_name = scanEntry.getValueText(9)
+
+        if service_class_uuids == "0000fff0-0000-1000-8000-00805f9b34fb":
+            # only notify about sem6000 devices
+            print({'address': address, 'name': complete_local_name}, file=sys.stderr)
+
+
 class SEM6000():
     def __init__(self, deviceAddr=None, pin=None, iface=None):
         self.timeout = 10
@@ -13,7 +29,7 @@ class SEM6000():
             for i in pin:
                 self.pin += int(i).to_bytes(1, 'little')
 
-        self._peripheral = btle.Peripheral(deviceAddr=deviceAddr, addrType=btle.ADDR_TYPE_PUBLIC, iface=iface)
+        self._peripheral = btle.Peripheral(deviceAddr=deviceAddr, addrType=btle.ADDR_TYPE_PUBLIC, iface=iface).withDelegate(SEM6000Delegate())
         self._characteristics = self._peripheral.getCharacteristics(uuid='0000fff3-0000-1000-8000-00805f9b34fb')[0]
 
         self.authorize()
