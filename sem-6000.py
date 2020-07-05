@@ -67,6 +67,22 @@ class SEM6000Delegate(btle.DefaultDelegate):
 
             return AuthorizationNotification(was_successful=was_successful)
 
+        if payload[0:2] == b'\x03\x00':
+            if len(payload) != 3:
+                raise Exception("invalid payload length for PowerSwitchNotification")
+
+            was_successful = False
+            if payload[2:3] == b'\x00':
+                was_successful = True
+
+            return PowerSwitchNotification(was_successful=was_successful)
+
+        if payload[0:3] == b'\x0f\x00\x05':
+            if len(payload) != 4:
+                raise Exception("invalid payload length for LEDSwitchNotification")
+
+            return LEDSwitchNotification(was_successful=True)
+
         return None
 
     def handleNotification(self, cHandle, data):
