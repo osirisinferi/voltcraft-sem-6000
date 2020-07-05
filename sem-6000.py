@@ -3,12 +3,24 @@
 import sys
 from bluepy import btle
 
-class AuthorizationNotification:
+class AbstractCommandConfirmationNotification:
     def __init__(self, was_successful):
         self.was_successful = was_successful
 
     def __str__(self):
-        return "AuthorizationNotification(was_successful=" + str(self.was_successful) + ")"
+        command_name = self.__class__.__name__
+        return command_name + "(was_successful=" + str(self.was_successful) + ")"
+    
+
+class AuthorizationNotification(AbstractCommandConfirmationNotification):
+    pass
+
+class PowerSwitchNotification(AbstractCommandConfirmationNotification):
+    pass
+
+class LEDSwitchNotification(AbstractCommandConfirmationNotification):
+    pass
+
 
 class SEM6000Delegate(btle.DefaultDelegate):
     def __init__(self, is_debug=False):
