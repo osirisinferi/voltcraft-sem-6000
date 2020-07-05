@@ -132,6 +132,9 @@ class SEM6000():
         self._send_command(command)
 
     def _send_command(self, command):
+        if self.is_debug:
+            print("sent data:" + str(command), file=sys.stderr)
+
         self._characteristics.write(command)
         self._peripheral.waitForNotifications(self.timeout)
 
