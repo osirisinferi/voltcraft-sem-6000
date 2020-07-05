@@ -70,21 +70,19 @@ class SEM6000Delegate(btle.DefaultDelegate):
         return None
 
     def handleNotification(self, cHandle, data):
-        if self.is_debug:
-            print("received data from handle " + str(cHandle) + ": " + str(data), file=sys.stderr)
-
         self.last_notification = self._parse_notification(data)
 
         if self.is_debug:
             if not self.last_notification is None:
-                print(self.last_notification, file=sys.stderr)
+                print("received data from handle " + str(cHandle) + ": " + str(data) + " (" + str(self.last_notification) + ")", file=sys.stderr)
             else:
-                print("Unknown notification received", file=sys.stderr)
+                print("received data from handle " + str(cHandle) + ": " + str(data) + " (Unknown Notification)", file=sys.stderr)
 
 
 class SEM6000():
-    def __init__(self, deviceAddr=None, pin=None, iface=None):
+    def __init__(self, deviceAddr=None, pin=None, iface=None, is_debug=False):
         self.timeout = 10
+        self.is_debug = is_debug
 
         self.pin = b'0000'
         if not pin is None:
@@ -92,7 +90,7 @@ class SEM6000():
             for i in pin:
                 self.pin += int(i).to_bytes(1, 'little')
 
-        self._delegate = SEM6000Delegate(is_debug=True)
+        self._delegate = SEM6000Delegate(self.is_debug)
         self._peripheral = btle.Peripheral(deviceAddr=deviceAddr, addrType=btle.ADDR_TYPE_PUBLIC, iface=iface).withDelegate(self._delegate)
         self._characteristics = self._peripheral.getCharacteristics(uuid='0000fff3-0000-1000-8000-00805f9b34fb')[0]
 
@@ -187,7 +185,8 @@ if __name__ == '__main__':
         pin = sys.argv[2]
         cmd = sys.argv[3]
 
-        sem6000 = SEM6000(deviceAddr, pin)
+        sem6000 = SEM6000(deviceAddr, pin, is_debug=True)
+
         if cmd == 'power_on':
             sem6000.power_on()
         if cmd == 'power_off':
