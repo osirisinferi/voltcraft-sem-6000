@@ -102,15 +102,20 @@ class SEM6000():
 
         self.pin = b'0000'
         if not pin is None:
-            self.pin = b''
-            for i in pin:
-                self.pin += int(i).to_bytes(1, 'little')
+            self.pin = SEM6000.parse_pin_to_bytes(pin)
 
         self._delegate = SEM6000Delegate(self.is_debug)
         self._peripheral = btle.Peripheral(deviceAddr=deviceAddr, addrType=btle.ADDR_TYPE_PUBLIC, iface=iface).withDelegate(self._delegate)
         self._characteristics = self._peripheral.getCharacteristics(uuid='0000fff3-0000-1000-8000-00805f9b34fb')[0]
 
         self.authorize()
+
+    def parse_pin_to_bytes(pin):
+            pin_bytes = b''
+            for i in pin:
+                pin_bytes += int(i).to_bytes(1, 'little')
+            
+            return pin_bytes
 
     def discover(timeout=10):
         result = []
@@ -144,18 +149,35 @@ class SEM6000():
     def power_on(self):
         command = self._create_power_on_command()
         self._send_command(command)
+        notification = self._delegate.last_notification
+        
+        if not isinstance(notification, PowerSwitchNotification) or not notification.was_successful:
+            raise Exception("Power on failed")
 
     def power_off(self):
         command = self._create_power_off_command()
         self._send_command(command)
+        notification = self._delegate.last_notification
+        
+        if not isinstance(notification, PowerSwitchNotification) or not notification.was_successful:
+            raise Exception("Power off failed")
 
     def led_on(self):
         command = self._create_led_on_command()
         self._send_command(command)
+        notification = self._delegate.last_notification
+        
+        if not isinstance(notification, LEDSwitchNotification) or not notification.was_successful:
+            raise Exception("LED on failed")
 
     def led_off(self):
         command = self._create_led_off_command()
         self._send_command(command)
+        notification = self._delegate.last_notification
+        
+        if not isinstance(notification, LEDSwitchNotification) or not notification.was_successful:
+            raise Exception("LED off failed")
+
 
     def _send_command(self, command):
         if self.is_debug:
