@@ -15,6 +15,9 @@ class AbstractCommandConfirmationNotification:
 class AuthorizationNotification(AbstractCommandConfirmationNotification):
     pass
 
+class ChangePinNotification(AbstractCommandConfirmationNotification):
+    pass
+
 class PowerSwitchNotification(AbstractCommandConfirmationNotification):
     pass
 
@@ -57,7 +60,7 @@ class SEM6000Delegate(btle.DefaultDelegate):
     def _parse_notification(self, data):
         payload = self._parse_payload(data)
 
-        if payload[0:2] == b'\x17\x00':
+        if payload[0:2] == b'\x17\x00' and payload[3:4] == b'\x00':
             if len(payload) != 5:
                 raise Exception("invalid payload length for AuthenticationNotification")
 
@@ -66,6 +69,16 @@ class SEM6000Delegate(btle.DefaultDelegate):
                 was_successful = True
 
             return AuthorizationNotification(was_successful=was_successful)
+
+        if payload[0:2] == b'\x17\x00' and payload[3:4] == b'\x01':
+            if len(payload) != 5:
+                raise Exception("invalid payload length for ChangePinNotification")
+
+            was_successful = False
+            if payload[2:3] == b'\x00':
+                was_successful = True
+            
+            return ChangePinNotification(was_successful=was_successful)
 
         if payload[0:2] == b'\x03\x00':
             if len(payload) != 3:
@@ -146,6 +159,16 @@ class SEM6000():
         if not isinstance(notification, AuthorizationNotification) or not notification.was_successful:
             raise Exception("Authentication failed")
 
+    def change_pin(self, new_pin):
+        new_pin_bytes = SEM6000.parse_pin_to_bytes(new_pin)
+        
+        command = self._create_change_pin_command(new_pin_bytes)
+        self._send_command(command)
+        notification = self._delegate.last_notification
+
+        if not isinstance(notification, ChangePinNotification) or not notification.was_successful:
+            raise Exception("Change PIN failed")
+
     def power_on(self):
         command = self._create_power_on_command()
         self._send_command(command)
@@ -200,6 +223,9 @@ class SEM6000():
     def _create_authorize_command(self):
         return self._create_command_message(b'\x17\x00\x00' + self.pin + b'\x00\x00\x00\x00')
 
+    def _create_change_pin_command(self, new_pin_bytes):
+        return self._create_command_message(b'\x17\x00\x01' + new_pin_bytes + self.pin)
+
     def _create_power_on_command(self):
         return self._create_command_message(b'\x03\x00\x01' + b'\x00\x00')
         
@@ -225,6 +251,8 @@ if __name__ == '__main__':
 
         sem6000 = SEM6000(deviceAddr, pin, is_debug=True)
 
+        if cmd == 'change_pin':
+            sem6000.change_pin(sys.argv[4])
         if cmd == 'power_on':
             sem6000.power_on()
         if cmd == 'power_off':
