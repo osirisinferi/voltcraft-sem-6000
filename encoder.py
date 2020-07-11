@@ -1,6 +1,6 @@
 import message
 
-class CommandEncoder():
+class MessageEncoder():
     def _encode_command_message(self, payload):
         command = b'\x0f'
 

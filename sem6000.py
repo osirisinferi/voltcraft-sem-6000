@@ -18,16 +18,23 @@ class SEM6000Delegate(btle.DefaultDelegate):
 
         self.last_notification = None
 
-        self._parser = parser.NotificationParser()
+        self._parser = parser.MessageParser()
 
     def handleNotification(self, cHandle, data):
-        self.last_notification = self._parser.parse_notification(data)
+        exception = None
+        try:
+            self.last_notification = self._parser.parse(data)
+        except Exception as e:
+            exception = e
 
         if self.debug:
             if not self.last_notification is None:
                 print("received data from handle " + str(cHandle) + ": " + str(data) + " (" + str(self.last_notification) + ")", file=sys.stderr)
             else:
                 print("received data from handle " + str(cHandle) + ": " + str(data) + " (Unknown Notification)", file=sys.stderr)
+
+        if not exception is None:
+            raise exception
 
 
 class SEM6000():
@@ -39,7 +46,7 @@ class SEM6000():
         if not pin is None:
             self.pin = pin
 
-        self._encoder = encoder.CommandEncoder()
+        self._encoder = encoder.MessageEncoder()
 
         self._delegate = SEM6000Delegate(self.debug)
         self._peripheral = btle.Peripheral(deviceAddr=deviceAddr, addrType=btle.ADDR_TYPE_PUBLIC, iface=iface).withDelegate(self._delegate)

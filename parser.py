@@ -1,6 +1,6 @@
 import message
 
-class NotificationParser:
+class MessageParser:
     def _parse_payload(self, data):
         if data[0:1] != b'\x0f':
             raise Exception("Invalid response")
@@ -23,7 +23,7 @@ class NotificationParser:
 
         return payload
 
-    def parse_notification(self, data):
+    def parse(self, data):
         payload = self._parse_payload(data)
 
         if payload[0:2] == b'\x17\x00' and payload[3:4] == b'\x00':
