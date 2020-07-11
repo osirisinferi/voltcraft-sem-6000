@@ -9,12 +9,12 @@ from bluepy import btle
 
 
 class SEM6000Delegate(btle.DefaultDelegate):
-    def __init__(self, is_debug=False):
+    def __init__(self, debug=False):
         btle.DefaultDelegate.__init__(self)
 
-        self.is_debug = False
-        if is_debug:
-            self.is_debug = True
+        self.debug = False
+        if debug:
+            self.debug = True
 
         self.last_notification = None
 
@@ -23,7 +23,7 @@ class SEM6000Delegate(btle.DefaultDelegate):
     def handleNotification(self, cHandle, data):
         self.last_notification = self._parser.parse_notification(data)
 
-        if self.is_debug:
+        if self.debug:
             if not self.last_notification is None:
                 print("received data from handle " + str(cHandle) + ": " + str(data) + " (" + str(self.last_notification) + ")", file=sys.stderr)
             else:
@@ -31,9 +31,9 @@ class SEM6000Delegate(btle.DefaultDelegate):
 
 
 class SEM6000():
-    def __init__(self, deviceAddr=None, pin=None, iface=None, is_debug=False):
+    def __init__(self, deviceAddr=None, pin=None, iface=None, debug=False):
         self.timeout = 10
-        self.is_debug = is_debug
+        self.debug = debug
 
         self.pin = '0000'
         if not pin is None:
@@ -41,7 +41,7 @@ class SEM6000():
 
         self._encoder = encoder.CommandEncoder()
 
-        self._delegate = SEM6000Delegate(self.is_debug)
+        self._delegate = SEM6000Delegate(self.debug)
         self._peripheral = btle.Peripheral(deviceAddr=deviceAddr, addrType=btle.ADDR_TYPE_PUBLIC, iface=iface).withDelegate(self._delegate)
         self._characteristics = self._peripheral.getCharacteristics(uuid='0000fff3-0000-1000-8000-00805f9b34fb')[0]
 
@@ -118,7 +118,7 @@ class SEM6000():
 
 
     def _send_command(self, command):
-        if self.is_debug:
+        if self.debug:
             print("sent data:" + str(command), file=sys.stderr)
 
         encoded_command = self._encoder.encode(command)
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         pin = sys.argv[2]
         cmd = sys.argv[3]
 
-        sem6000 = SEM6000(deviceAddr, pin, is_debug=True)
+        sem6000 = SEM6000(deviceAddr, pin, debug=True)
 
         if cmd == 'change_pin':
             sem6000.change_pin(sys.argv[4])
