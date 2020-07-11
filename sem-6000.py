@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import parser
+import encoder
 import message
 
 import sys
@@ -34,22 +35,17 @@ class SEM6000():
         self.timeout = 10
         self.is_debug = is_debug
 
-        self.pin = b'0000'
+        self.pin = '0000'
         if not pin is None:
-            self.pin = SEM6000.parse_pin_to_bytes(pin)
+            self.pin = pin
+
+        self._encoder = encoder.CommandEncoder()
 
         self._delegate = SEM6000Delegate(self.is_debug)
         self._peripheral = btle.Peripheral(deviceAddr=deviceAddr, addrType=btle.ADDR_TYPE_PUBLIC, iface=iface).withDelegate(self._delegate)
         self._characteristics = self._peripheral.getCharacteristics(uuid='0000fff3-0000-1000-8000-00805f9b34fb')[0]
 
         self.authorize()
-
-    def parse_pin_to_bytes(pin):
-            pin_bytes = b''
-            for i in pin:
-                pin_bytes += int(i).to_bytes(1, 'little')
-            
-            return pin_bytes
 
     def discover(timeout=10):
         result = []
@@ -73,7 +69,7 @@ class SEM6000():
         return result
 
     def authorize(self):
-        command = self._create_authorize_command()
+        command = message.AuthorizeCommand(self.pin)
         self._send_command(command)
         notification = self._delegate.last_notification
 
@@ -81,9 +77,7 @@ class SEM6000():
             raise Exception("Authentication failed")
 
     def change_pin(self, new_pin):
-        new_pin_bytes = SEM6000.parse_pin_to_bytes(new_pin)
-        
-        command = self._create_change_pin_command(new_pin_bytes)
+        command = message.ChangePinCommand(self.pin, new_pin)
         self._send_command(command)
         notification = self._delegate.last_notification
 
@@ -91,7 +85,7 @@ class SEM6000():
             raise Exception("Change PIN failed")
 
     def power_on(self):
-        command = self._create_power_on_command()
+        command = message.PowerSwitchCommand(True)
         self._send_command(command)
         notification = self._delegate.last_notification
         
@@ -99,7 +93,7 @@ class SEM6000():
             raise Exception("Power on failed")
 
     def power_off(self):
-        command = self._create_power_off_command()
+        command = message.PowerSwitchCommand(False)
         self._send_command(command)
         notification = self._delegate.last_notification
         
@@ -107,7 +101,7 @@ class SEM6000():
             raise Exception("Power off failed")
 
     def led_on(self):
-        command = self._create_led_on_command()
+        command = message.LEDSwitchCommand(True)
         self._send_command(command)
         notification = self._delegate.last_notification
         
@@ -115,7 +109,7 @@ class SEM6000():
             raise Exception("LED on failed")
 
     def led_off(self):
-        command = self._create_led_off_command()
+        command = message.LEDSwitchCommand(False)
         self._send_command(command)
         notification = self._delegate.last_notification
         
@@ -127,37 +121,9 @@ class SEM6000():
         if self.is_debug:
             print("sent data:" + str(command), file=sys.stderr)
 
-        self._characteristics.write(command)
+        encoded_command = self._encoder.encode(command)
+        self._characteristics.write(encoded_command)
         self._peripheral.waitForNotifications(self.timeout)
-
-    def _create_command_message(self, payload):
-        command = b'\x0f'
-
-        command += (len(payload)+1).to_bytes(1, 'little')
-        command += payload
-
-        command += ((1+sum(payload)) & 0xff).to_bytes(1, 'little')
-        command += b'\xff\xff'
-
-        return command
-
-    def _create_authorize_command(self):
-        return self._create_command_message(b'\x17\x00\x00' + self.pin + b'\x00\x00\x00\x00')
-
-    def _create_change_pin_command(self, new_pin_bytes):
-        return self._create_command_message(b'\x17\x00\x01' + new_pin_bytes + self.pin)
-
-    def _create_power_on_command(self):
-        return self._create_command_message(b'\x03\x00\x01' + b'\x00\x00')
-        
-    def _create_power_off_command(self):
-        return self._create_command_message(b'\x03\x00\x00' + b'\x00\x00')
-
-    def _create_led_on_command(self):
-        return self._create_command_message(b'\x0f\x00\x05\x01' + b'\x00\x00\x00\x00')
- 
-    def _create_led_off_command(self):
-        return self._create_command_message(b'\x0f\x00\x05\x00' + b'\x00\x00\x00\x00')
 
 
 if __name__ == '__main__':
