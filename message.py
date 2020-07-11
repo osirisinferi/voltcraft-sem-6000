@@ -33,6 +33,12 @@ class ChangePinCommand():
         command_name = self.__class__.__name__
         return command_name + "(pin=" + str(self.pin) + ", new_pin=" + str(self.new_pin) + ")"
 
+class ResetPinCommand():
+    def __str__(self):
+        command_name = self.__class__.__name__
+        return command_name + "()"
+
+
 class PowerSwitchCommand(AbstractSwitchCommand):
     pass
 
@@ -44,6 +50,9 @@ class AuthorizationNotification(AbstractCommandConfirmationNotification):
     pass
 
 class ChangePinNotification(AbstractCommandConfirmationNotification):
+    pass
+
+class ResetPinNotification(AbstractCommandConfirmationNotification):
     pass
 
 class PowerSwitchNotification(AbstractCommandConfirmationNotification):

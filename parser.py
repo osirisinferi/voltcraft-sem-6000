@@ -46,6 +46,16 @@ class NotificationParser:
             
             return message.ChangePinNotification(was_successful=was_successful)
 
+        if payload[0:2] == b'\x17\x00' and payload[3:4] == b'\x02':
+            if len(payload) != 5:
+                raise Exception("invalid payload length for ResetPinNotification")
+
+            was_successful = False
+            if payload[2:3] == b'\x00':
+                was_successful = True
+
+            return message.ResetPinNotification(was_successful=was_successful)
+
         if payload[0:2] == b'\x03\x00':
             if len(payload) != 3:
                 raise Exception("invalid payload length for PowerSwitchNotification")

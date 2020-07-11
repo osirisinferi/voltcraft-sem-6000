@@ -45,8 +45,6 @@ class SEM6000():
         self._peripheral = btle.Peripheral(deviceAddr=deviceAddr, addrType=btle.ADDR_TYPE_PUBLIC, iface=iface).withDelegate(self._delegate)
         self._characteristics = self._peripheral.getCharacteristics(uuid='0000fff3-0000-1000-8000-00805f9b34fb')[0]
 
-        self.authorize()
-
     def discover(timeout=10):
         result = []
 
@@ -83,6 +81,14 @@ class SEM6000():
 
         if not isinstance(notification, message.ChangePinNotification) or not notification.was_successful:
             raise Exception("Change PIN failed")
+
+    def reset_pin(self):
+        command = message.ResetPinCommand()
+        self._send_command(command)
+        notification = self._delegate.last_notification
+
+        if not isinstance(notification, message.ResetPinNotification) or not notification.was_successful:
+            raise Exception("Reset PIN failed")
 
     def power_on(self):
         command = message.PowerSwitchCommand(True)
@@ -138,8 +144,13 @@ if __name__ == '__main__':
 
         sem6000 = SEM6000(deviceAddr, pin, debug=True)
 
+        if cmd != 'reset_pin':
+            sem6000.authorize()
+
         if cmd == 'change_pin':
             sem6000.change_pin(sys.argv[4])
+        if cmd == 'reset_pin':
+            sem6000.reset_pin()
         if cmd == 'power_on':
             sem6000.power_on()
         if cmd == 'power_off':

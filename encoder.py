@@ -29,6 +29,9 @@ class CommandEncoder():
             encoded_new_pin = self._encode_pin(command.new_pin)
             return self._encode_command_message(b'\x17\x00\x01' + encoded_new_pin + encoded_pin)
 
+        if isinstance(command, message.ResetPinCommand):
+            return self._encode_command_message(b'\x17\x00\x02' + b'\x00\x00\x00\x00\x00\x00\x00\x00')
+
         if isinstance(command, message.PowerSwitchCommand):
             if command.on:
                 return self._encode_command_message(b'\x03\x00\x01' + b'\x00\x00')
