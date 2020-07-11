@@ -1,28 +1,10 @@
 #!/usr/bin/python3
 
+import parser
+import message
+
 import sys
 from bluepy import btle
-
-class AbstractCommandConfirmationNotification:
-    def __init__(self, was_successful):
-        self.was_successful = was_successful
-
-    def __str__(self):
-        command_name = self.__class__.__name__
-        return command_name + "(was_successful=" + str(self.was_successful) + ")"
-    
-
-class AuthorizationNotification(AbstractCommandConfirmationNotification):
-    pass
-
-class ChangePinNotification(AbstractCommandConfirmationNotification):
-    pass
-
-class PowerSwitchNotification(AbstractCommandConfirmationNotification):
-    pass
-
-class LEDSwitchNotification(AbstractCommandConfirmationNotification):
-    pass
 
 
 class SEM6000Delegate(btle.DefaultDelegate):
@@ -35,71 +17,10 @@ class SEM6000Delegate(btle.DefaultDelegate):
 
         self.last_notification = None
 
-    def _parse_payload(self, data):
-        if data[0:1] != b'\x0f':
-            raise Exception("Invalid response")
-
-        length_of_payload = data[1]
-
-        payload = data[2:2+length_of_payload-1]
-        checksum_received = data[2+length_of_payload-1]
-
-        checksum = (1+sum(payload)) & 0xff
-
-        if checksum_received != checksum:
-            raise Exception("Invalid checksum " + str(checksum) + ", expected=" + str(checksum_received))
-
-        if len(data) > 2+length_of_payload:
-            # if suffix exists it must be b'\xff\xff'
-            suffix = data[2+length_of_payload:]
-            if suffix != b'\xff\xff':
-                raise Exception("Invalid suffix " + str(suffix))
-
-        return payload
-
-    def _parse_notification(self, data):
-        payload = self._parse_payload(data)
-
-        if payload[0:2] == b'\x17\x00' and payload[3:4] == b'\x00':
-            if len(payload) != 5:
-                raise Exception("invalid payload length for AuthenticationNotification")
-
-            was_successful = False
-            if payload[2:3] == b'\x00':
-                was_successful = True
-
-            return AuthorizationNotification(was_successful=was_successful)
-
-        if payload[0:2] == b'\x17\x00' and payload[3:4] == b'\x01':
-            if len(payload) != 5:
-                raise Exception("invalid payload length for ChangePinNotification")
-
-            was_successful = False
-            if payload[2:3] == b'\x00':
-                was_successful = True
-            
-            return ChangePinNotification(was_successful=was_successful)
-
-        if payload[0:2] == b'\x03\x00':
-            if len(payload) != 3:
-                raise Exception("invalid payload length for PowerSwitchNotification")
-
-            was_successful = False
-            if payload[2:3] == b'\x00':
-                was_successful = True
-
-            return PowerSwitchNotification(was_successful=was_successful)
-
-        if payload[0:3] == b'\x0f\x00\x05':
-            if len(payload) != 4:
-                raise Exception("invalid payload length for LEDSwitchNotification")
-
-            return LEDSwitchNotification(was_successful=True)
-
-        return None
+        self._parser = parser.NotificationParser()
 
     def handleNotification(self, cHandle, data):
-        self.last_notification = self._parse_notification(data)
+        self.last_notification = self._parser.parse_notification(data)
 
         if self.is_debug:
             if not self.last_notification is None:
@@ -156,7 +77,7 @@ class SEM6000():
         self._send_command(command)
         notification = self._delegate.last_notification
 
-        if not isinstance(notification, AuthorizationNotification) or not notification.was_successful:
+        if not isinstance(notification, message.AuthorizationNotification) or not notification.was_successful:
             raise Exception("Authentication failed")
 
     def change_pin(self, new_pin):
@@ -166,7 +87,7 @@ class SEM6000():
         self._send_command(command)
         notification = self._delegate.last_notification
 
-        if not isinstance(notification, ChangePinNotification) or not notification.was_successful:
+        if not isinstance(notification, message.ChangePinNotification) or not notification.was_successful:
             raise Exception("Change PIN failed")
 
     def power_on(self):
@@ -174,7 +95,7 @@ class SEM6000():
         self._send_command(command)
         notification = self._delegate.last_notification
         
-        if not isinstance(notification, PowerSwitchNotification) or not notification.was_successful:
+        if not isinstance(notification, message.PowerSwitchNotification) or not notification.was_successful:
             raise Exception("Power on failed")
 
     def power_off(self):
@@ -182,7 +103,7 @@ class SEM6000():
         self._send_command(command)
         notification = self._delegate.last_notification
         
-        if not isinstance(notification, PowerSwitchNotification) or not notification.was_successful:
+        if not isinstance(notification, message.PowerSwitchNotification) or not notification.was_successful:
             raise Exception("Power off failed")
 
     def led_on(self):
@@ -190,7 +111,7 @@ class SEM6000():
         self._send_command(command)
         notification = self._delegate.last_notification
         
-        if not isinstance(notification, LEDSwitchNotification) or not notification.was_successful:
+        if not isinstance(notification, message.LEDSwitchNotification) or not notification.was_successful:
             raise Exception("LED on failed")
 
     def led_off(self):
@@ -198,7 +119,7 @@ class SEM6000():
         self._send_command(command)
         notification = self._delegate.last_notification
         
-        if not isinstance(notification, LEDSwitchNotification) or not notification.was_successful:
+        if not isinstance(notification, message.LEDSwitchNotification) or not notification.was_successful:
             raise Exception("LED off failed")
 
 
