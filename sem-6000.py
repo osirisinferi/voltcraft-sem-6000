@@ -243,7 +243,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         devices = SEM6000.discover()
         for device in devices:
-            print(device)
+            print(device['name'] + '\t' + device['address'])
     else:
         deviceAddr = sys.argv[1]
         pin = sys.argv[2]
