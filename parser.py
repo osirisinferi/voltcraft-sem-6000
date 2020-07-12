@@ -91,4 +91,26 @@ class MessageParser:
 
             return SynchronizeDateAndTimeNotification(was_successful=was_successful)
 
+        if payload[0:2] == b'\x10\x00':
+            if len(payload) != 13:
+                raise InvalidPayloadLengthException(message_class=RequestedSettingsNotification.__class__, expected_payload_length=13, actual_payload_length=len(payload))
+
+            is_reduced_mode_active = False
+            if payload[2:3] == b'\x01':
+                is_reduced_mode_active = True
+
+            normal_price_in_cent = int.from_bytes(payload[3:4], 'big')
+            reduced_price_in_cent = int.from_bytes(payload[4:5], 'big')
+
+            reduced_mode_start_in_minutes = int.from_bytes(payload[5:7], 'big')
+            reduced_mode_end_in_minutes = int.from_bytes(payload[7:9], 'big')
+
+            is_led_on = False
+            if payload[9:10] == b'\x01':
+                is_led_on = True
+
+            power_limit_in_watt = int.from_bytes(payload[11:13], 'big')
+
+            return RequestedSettingsNotification(is_reduced_mode_active=is_reduced_mode_active, normal_price_in_cent=normal_price_in_cent, reduced_price_in_cent=reduced_price_in_cent, reduced_mode_start_in_minutes=reduced_mode_start_in_minutes, reduced_mode_end_in_minutes=reduced_mode_end_in_minutes, is_led_on=is_led_on, power_limit_in_watt=power_limit_in_watt)
+
         raise Exception('Unsupported message')

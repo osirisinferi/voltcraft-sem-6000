@@ -55,6 +55,9 @@ class MessageEncoder():
 
             return self._encode_message(b'\x01\x00' + second + minute + hour + day + month + year + b'\x00\x00')
 
+        if isinstance(message, RequestSettingsCommand):
+            return self._encode_message(b'\x10\x00' + b'\x00\x00')
+
         if isinstance(message, AuthorizationNotification):
             was_successful = b'\x01'
             if message.was_successful:
@@ -92,6 +95,25 @@ class MessageEncoder():
                 was_successful = b'\x00'
 
             return self._encode_message(b'\x01\x00' + was_successful)
+
+        if isinstance(message, RequestedSettingsNotification):
+            is_reduced_mode_active = b'\x00'
+            if message.is_reduced_mode_active:
+                is_reduced_mode_active = b'\x01'
+
+            normal_price_in_cent = message.normal_price_in_cent.to_bytes(1, 'big')
+            reduced_price_in_cent = message.reduced_price_in_cent.to_bytes(1, 'big')
+
+            reduced_mode_start_in_minutes = message.reduced_mode_start_in_minutes.to_bytes(2, 'big')
+            reduced_mode_end_in_minutes = message.reduced_mode_end_in_minutes.to_bytes(2, 'big')
+
+            is_led_on = b'\x00'
+            if message.is_led_on:
+                is_led_on = b'\x01'
+
+            power_limit_in_watt = message.power_limit_in_watt.to_bytes(2, 'big')
+
+            return self._encode_message(b'\x10\x00' + is_reduced_mode_active + normal_price_in_cent + reduced_price_in_cent + reduced_mode_start_in_minutes + reduced_mode_end_in_minutes + is_led_on + b'\x00' + power_limit_in_watt)
 
 
         raise Exception('Unsupported message ' + str(message))

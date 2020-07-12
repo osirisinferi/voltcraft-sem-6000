@@ -7,7 +7,7 @@ from bluepy import btle
 
 import parser
 import encoder
-import message
+from message import *
 
 
 class SEM6000Delegate(btle.DefaultDelegate):
@@ -72,70 +72,95 @@ class SEM6000():
         return result
 
     def authorize(self):
-        command = message.AuthorizeCommand(self.pin)
+        command = AuthorizeCommand(self.pin)
         self._send_command(command)
         notification = self._delegate.last_notification
 
-        if not isinstance(notification, message.AuthorizationNotification) or not notification.was_successful:
+        if not isinstance(notification, AuthorizationNotification) or not notification.was_successful:
             raise Exception("Authentication failed")
 
+        return notification
+
     def change_pin(self, new_pin):
-        command = message.ChangePinCommand(self.pin, new_pin)
+        command = ChangePinCommand(self.pin, new_pin)
         self._send_command(command)
         notification = self._delegate.last_notification
 
-        if not isinstance(notification, message.ChangePinNotification) or not notification.was_successful:
+        if not isinstance(notification, ChangePinNotification) or not notification.was_successful:
             raise Exception("Change PIN failed")
 
+        return notification
+
     def reset_pin(self):
-        command = message.ResetPinCommand()
+        command = ResetPinCommand()
         self._send_command(command)
         notification = self._delegate.last_notification
 
-        if not isinstance(notification, message.ResetPinNotification) or not notification.was_successful:
+        if not isinstance(notification, ResetPinNotification) or not notification.was_successful:
             raise Exception("Reset PIN failed")
 
+        return notification
+
     def power_on(self):
-        command = message.PowerSwitchCommand(True)
+        command = PowerSwitchCommand(True)
         self._send_command(command)
         notification = self._delegate.last_notification
         
-        if not isinstance(notification, message.PowerSwitchNotification) or not notification.was_successful:
+        if not isinstance(notification, PowerSwitchNotification) or not notification.was_successful:
             raise Exception("Power on failed")
 
+        return notification
+
     def power_off(self):
-        command = message.PowerSwitchCommand(False)
+        command = PowerSwitchCommand(False)
         self._send_command(command)
         notification = self._delegate.last_notification
         
-        if not isinstance(notification, message.PowerSwitchNotification) or not notification.was_successful:
+        if not isinstance(notification, PowerSwitchNotification) or not notification.was_successful:
             raise Exception("Power off failed")
 
+        return notification
+
     def led_on(self):
-        command = message.LEDSwitchCommand(True)
+        command = LEDSwitchCommand(True)
         self._send_command(command)
         notification = self._delegate.last_notification
         
-        if not isinstance(notification, message.LEDSwitchNotification) or not notification.was_successful:
+        if not isinstance(notification, LEDSwitchNotification) or not notification.was_successful:
             raise Exception("LED on failed")
 
+        return notification
+
     def led_off(self):
-        command = message.LEDSwitchCommand(False)
+        command = LEDSwitchCommand(False)
         self._send_command(command)
         notification = self._delegate.last_notification
         
-        if not isinstance(notification, message.LEDSwitchNotification) or not notification.was_successful:
+        if not isinstance(notification, LEDSwitchNotification) or not notification.was_successful:
             raise Exception("LED off failed")
+
+        return notification
 
     def synchronize_date_and_time(self, isodatetime):
         date_and_time = datetime.datetime.fromisoformat(isodatetime)
-        command = message.SynchronizeDateAndTimeCommand(date_and_time.year, date_and_time.month, date_and_time.day, date_and_time.hour, date_and_time.minute, date_and_time.second)
+        command = SynchronizeDateAndTimeCommand(date_and_time.year, date_and_time.month, date_and_time.day, date_and_time.hour, date_and_time.minute, date_and_time.second)
         self._send_command(command)
         notification = self._delegate.last_notification
 
-        if not isinstance(notification, message.SynchronizeDateAndTimeNotification) or not notification.was_successful:
+        if not isinstance(notification, SynchronizeDateAndTimeNotification) or not notification.was_successful:
             raise Exception("Synchronize date and time failed")
 
+        return notification
+
+    def request_settings(self):
+        command = RequestSettingsCommand()
+        self._send_command(command)
+        notification = self._delegate.last_notification
+
+        if not isinstance(notification, RequestedSettingsNotification):
+            raise Exception("Request settings failed")
+
+        return notification
 
     def _send_command(self, command):
         encoded_command = self._encoder.encode(command)
@@ -145,6 +170,12 @@ class SEM6000():
 
         self._characteristics.write(encoded_command)
         self._peripheral.waitForNotifications(self.timeout)
+
+def _format_minutes_as_time(minutes):
+    hour = minutes // 24
+    minute = minutes - hour*60
+
+    return "{:02}:{:02}".format(hour, minute)
 
 
 if __name__ == '__main__':
@@ -176,4 +207,26 @@ if __name__ == '__main__':
             sem6000.led_off()
         if cmd == 'synchronize_date_and_time':
             sem6000.synchronize_date_and_time(sys.argv[4])
+        if cmd == 'request_settings':
+            response = sem6000.request_settings()
+            assert isinstance(response, RequestedSettingsNotification)
+
+            print("Settings:")
+            if response.is_reduced_mode_active:
+                print("\tReduced mode:\t\tOn")
+            else:
+                print("\tReduced mode:\t\tOff")
+
+            print("\tNormal price:\t\t{:.2f} EUR".format(response.normal_price_in_cent/100))
+            print("\tReduced price:\t\t{:.2f} EUR".format(response.reduced_price_in_cent/100))
+
+            print("\tRecuced mode start:\t{} minutes ({})".format(response.reduced_mode_start_in_minutes, _format_minutes_as_time(response.reduced_mode_start_in_minutes)))
+            print("\tRecuced mode end:\t{} minutes ({})".format(response.reduced_mode_end_in_minutes, _format_minutes_as_time(response.reduced_mode_end_in_minutes)))
+
+            if response.is_led_on:
+                print("\tLED state;\t\tOn")
+            else:
+                print("\tLED state;\t\tOff")
+
+            print("\tPower limit:\t\t{} W".format(response.power_limit_in_watt))
 
