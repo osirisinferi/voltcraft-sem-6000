@@ -1,4 +1,13 @@
-import message
+from message import *
+
+class InvalidPayloadLengthException(Exception):
+    def __init__(self, message_class, expected_payload_length, actual_payload_length):
+        self.message_class = message_class
+        self.expected_payload_length = expected_payload_length
+        self.actual_payload_length = actual_payload_length
+
+    def __str__(self):
+        return "message has invalid payload length for " + self.message_class.__name__ +  " (expected: " + str(self.expected_payload_length) + ", actual=" + str(self.actual_payload_length) + ")"
 
 class MessageParser:
     def _parse_payload(self, data):
@@ -28,58 +37,58 @@ class MessageParser:
 
         if payload[0:2] == b'\x17\x00' and payload[3:4] == b'\x00':
             if len(payload) != 5:
-                raise Exception("invalid payload length for AuthenticationNotification")
+                raise InvalidPayloadLengthException(message_class=AuthenticationNotification.__class__, expected_payload_length=5, actual_payload_length=len(payload))
 
             was_successful = False
             if payload[2:3] == b'\x00':
                 was_successful = True
 
-            return message.AuthorizationNotification(was_successful=was_successful)
+            return AuthorizationNotification(was_successful=was_successful)
 
         if payload[0:2] == b'\x17\x00' and payload[3:4] == b'\x01':
             if len(payload) != 5:
-                raise Exception("invalid payload length for ChangePinNotification")
+                raise InvalidPayloadLengthException(message_class=ChangePinNotification.__class__, expected_payload_length=5, actual_payload_length=len(payload))
 
             was_successful = False
             if payload[2:3] == b'\x00':
                 was_successful = True
             
-            return message.ChangePinNotification(was_successful=was_successful)
+            return ChangePinNotification(was_successful=was_successful)
 
         if payload[0:2] == b'\x17\x00' and payload[3:4] == b'\x02':
             if len(payload) != 5:
-                raise Exception("invalid payload length for ResetPinNotification")
+                raise InvalidPayloadLengthException(message_class=ResetPinNotification.__class__, expected_payload_length=5, actual_payload_length=len(payload))
 
             was_successful = False
             if payload[2:3] == b'\x00':
                 was_successful = True
 
-            return message.ResetPinNotification(was_successful=was_successful)
+            return ResetPinNotification(was_successful=was_successful)
 
         if payload[0:2] == b'\x03\x00':
             if len(payload) != 3:
-                raise Exception("invalid payload length for PowerSwitchNotification")
+                raise InvalidPayloadLengthException(message_class=PowerSwitchNotification.__class__, expected_payload_length=3, actual_payload_length=len(payload))
 
             was_successful = False
             if payload[2:3] == b'\x00':
                 was_successful = True
 
-            return message.PowerSwitchNotification(was_successful=was_successful)
+            return PowerSwitchNotification(was_successful=was_successful)
 
         if payload[0:3] == b'\x0f\x00\x05':
             if len(payload) != 4:
-                raise Exception("invalid payload length for LEDSwitchNotification")
+                raise InvalidPayloadLengthException(message_class=LEDSwitchNotification.__class__, expected_payload_length=4, actual_payload_length=len(payload))
 
-            return message.LEDSwitchNotification(was_successful=True)
+            return LEDSwitchNotification(was_successful=True)
 
         if payload[0:2] == b'\x01\x00':
             if len(payload) != 3:
-                raise Exception("invalid payload length for SynchronizeDateAndTimeNotification")
+                raise InvalidPayloadLengthException(message_class=SynchronizeDateAndTimeNotification.__class__, expected_payload_length=3, actual_payload_length=len(payload))
 
             was_successful = False
             if payload[2:3] == b'\x00':
                 was_successful = True
 
-            return message.SynchronizeDateAndTimeNotification(was_successful=was_successful)
+            return SynchronizeDateAndTimeNotification(was_successful=was_successful)
 
-        return None
+        raise Exception('Unsupported message')

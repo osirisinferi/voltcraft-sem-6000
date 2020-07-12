@@ -27,16 +27,12 @@ class SEM6000Delegate(btle.DefaultDelegate):
         try:
             self.last_notification = self._parser.parse(data)
         except Exception as e:
-            exception = e
+            if self.debug:
+                print("received data from handle " + str(cHandle) + ": " + str(binascii.hexlify(data)) + " (Unknown Notification)", file=sys.stderr)
+            raise e
 
         if self.debug:
-            if not self.last_notification is None:
-                print("received data from handle " + str(cHandle) + ": " + str(binascii.hexlify(data)) + " (" + str(self.last_notification) + ")", file=sys.stderr)
-            else:
-                print("received data from handle " + str(cHandle) + ": " + str(binascii.hexlify(data)) + " (Unknown Notification)", file=sys.stderr)
-
-        if not exception is None:
-            raise exception
+            print("received data from handle " + str(cHandle) + ": " + str(binascii.hexlify(data)) + " (" + str(self.last_notification) + ")", file=sys.stderr)
 
 
 class SEM6000():
