@@ -4,10 +4,10 @@ class MessageEncoder():
     def _encode_message(self, payload, suffix=b'\xff\xff'):
         message = b'\x0f'
 
-        message += (len(payload)+1).to_bytes(1, 'little')
+        message += (len(payload)+1).to_bytes(1, 'big')
         message += payload
 
-        message += ((1+sum(payload)) & 0xff).to_bytes(1, 'little')
+        message += ((1+sum(payload)) & 0xff).to_bytes(1, 'big')
         message += suffix
 
         return message
@@ -15,7 +15,7 @@ class MessageEncoder():
     def _encode_pin(self, pin):
             pin_bytes = b''
             for i in pin:
-                pin_bytes += int(i).to_bytes(1, 'little')
+                pin_bytes += int(i).to_bytes(1, 'big')
             
             return pin_bytes
 
@@ -44,6 +44,16 @@ class MessageEncoder():
             else:
                 return self._encode_message(b'\x0f\x00\x05\x00' + b'\x00\x00\x00\x00')
 
+        if isinstance(message, SynchronizeDateAndTimeCommand):
+            encoded_year = message.year.to_bytes(2, 'big')
+            encoded_month = message.month.to_bytes(1, 'big')
+            encoded_day = message.day.to_bytes(1, 'big')
+
+            encoded_hour = message.hour.to_bytes(1, 'big')
+            encoded_minute = message.minute.to_bytes(1, 'big')
+            encoded_second = message.second.to_bytes(1, 'big')
+
+            return self._encode_message(b'\x01\x00' + encoded_second + encoded_minute + encoded_hour + encoded_day + encoded_month + encoded_year + b'\x00\x00')
 
         if isinstance(message, AuthorizationNotification):
             was_successful = b'\x01'
@@ -75,6 +85,13 @@ class MessageEncoder():
 
         if isinstance(message, LEDSwitchNotification):
             return self._encode_message(b'\x0f\x00' + b'\x05\x00')
+
+        if isinstance(message, SynchronizeDateAndTimeNotification):
+            was_successful = b'\x01'
+            if message.was_successful:
+                was_successful = b'\x00'
+
+            return self._encode_message(b'\x01\x00' + was_successful)
 
 
         raise Exception('Unsupported message ' + str(message))

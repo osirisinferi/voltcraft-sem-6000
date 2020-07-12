@@ -72,4 +72,14 @@ class MessageParser:
 
             return message.LEDSwitchNotification(was_successful=True)
 
+        if payload[0:2] == b'\x01\x00':
+            if len(payload) != 3:
+                raise Exception("invalid payload length for SynchronizeDateAndTimeNotification")
+
+            was_successful = False
+            if payload[2:3] == b'\x00':
+                was_successful = True
+
+            return message.SynchronizeDateAndTimeNotification(was_successful=was_successful)
+
         return None

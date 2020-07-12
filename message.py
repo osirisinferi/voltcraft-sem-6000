@@ -1,3 +1,5 @@
+import datetime
+
 class AbstractCommand:
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -10,7 +12,7 @@ class AbstractCommand:
         return command_name + "()"
 
 
-class AbstractSwitchCommand(AbstractCommand):
+class AbstractSwitchCommand():
     def __init__(self, on):
         self.on = on
 
@@ -95,6 +97,46 @@ class PowerSwitchCommand(AbstractSwitchCommand):
 class LEDSwitchCommand(AbstractSwitchCommand):
     pass
 
+class SynchronizeDateAndTimeCommand():
+    def __init__(self, year, month, day, hour, minute, second):
+        d = datetime.datetime(year, month, day, hour, minute, second)
+
+        self.year = d.year
+        self.month = d.month
+        self.day = d.day
+
+        self.hour = d.hour
+        self.minute = d.minute
+        self.second = d.second
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+
+        if self.year != other.year:
+            return False
+
+        if self.month!= other.month:
+            return False
+
+        if self.day != other.day:
+            return False
+
+        if self.hour != other.hour:
+            return False
+
+        if self.minute != other.minute:
+            return False
+
+        if self.second != other.second:
+            return False
+
+        return True
+
+    def __str__(self):
+        command_name = self.__class__.__name__
+        return command_name + "(year=" + str(self.year) + ", month=" + str(self.month) + ", day=" + str(self.day) + ", hour=" + str(self.hour) + ", minute=" + str(self.minute) + ", second=" + str(self.second) + ")"
+
 
 class AuthorizationNotification(AbstractCommandConfirmationNotification):
     pass
@@ -111,3 +153,5 @@ class PowerSwitchNotification(AbstractCommandConfirmationNotification):
 class LEDSwitchNotification(AbstractCommandConfirmationNotification):
     pass
 
+class SynchronizeDateAndTimeNotification(AbstractCommandConfirmationNotification):
+    pass

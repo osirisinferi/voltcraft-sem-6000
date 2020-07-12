@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 
+import binascii
+import datetime
+import sys
+from bluepy import btle
+
 import parser
 import encoder
 import message
-
-import sys
-from bluepy import btle
 
 
 class SEM6000Delegate(btle.DefaultDelegate):
@@ -29,9 +31,9 @@ class SEM6000Delegate(btle.DefaultDelegate):
 
         if self.debug:
             if not self.last_notification is None:
-                print("received data from handle " + str(cHandle) + ": " + str(data) + " (" + str(self.last_notification) + ")", file=sys.stderr)
+                print("received data from handle " + str(cHandle) + ": " + str(binascii.hexlify(data)) + " (" + str(self.last_notification) + ")", file=sys.stderr)
             else:
-                print("received data from handle " + str(cHandle) + ": " + str(data) + " (Unknown Notification)", file=sys.stderr)
+                print("received data from handle " + str(cHandle) + ": " + str(binascii.hexlify(data)) + " (Unknown Notification)", file=sys.stderr)
 
         if not exception is None:
             raise exception
@@ -129,12 +131,22 @@ class SEM6000():
         if not isinstance(notification, message.LEDSwitchNotification) or not notification.was_successful:
             raise Exception("LED off failed")
 
+    def synchronize_date_and_time(self, isodatetime):
+        date_and_time = datetime.datetime.fromisoformat(isodatetime)
+        command = message.SynchronizeDateAndTimeCommand(date_and_time.year, date_and_time.month, date_and_time.day, date_and_time.hour, date_and_time.minute, date_and_time.second)
+        self._send_command(command)
+        notification = self._delegate.last_notification
+
+        if not isinstance(notification, message.SynchronizeDateAndTimeNotification) or not notification.was_successful:
+            raise Exception("Synchronize date and time failed")
+
 
     def _send_command(self, command):
-        if self.debug:
-            print("sent data:" + str(command), file=sys.stderr)
-
         encoded_command = self._encoder.encode(command)
+
+        if self.debug:
+            print("sent data: " + str(binascii.hexlify(encoded_command)) + " (" + str(command) + ")", file=sys.stderr)
+
         self._characteristics.write(encoded_command)
         self._peripheral.waitForNotifications(self.timeout)
 
@@ -166,4 +178,6 @@ if __name__ == '__main__':
             sem6000.led_on()
         if cmd == 'led_off':
             sem6000.led_off()
+        if cmd == 'synchronize_date_and_time':
+            sem6000.synchronize_date_and_time(sys.argv[4])
 

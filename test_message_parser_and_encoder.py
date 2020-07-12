@@ -6,38 +6,43 @@ from message import *
 
 class MessagesTest(unittest.TestCase):
     def test_AuthorizationNotification(self):
-        command = AuthorizationNotification(True)
-        message = MessageEncoder().encode(command)
-        parsed_command = MessageParser().parse(message)
+        message = AuthorizationNotification(True)
+        encoded_message = MessageEncoder().encode(message)
+        parsed_message = MessageParser().parse(encoded_message)
 
-        self.assertEqual(command, parsed_command)
+        self.assertEqual(message, parsed_message)
 
     def test_ChangePinNotification(self):
-        command = ChangePinNotification(True)
-        message = MessageEncoder().encode(command)
-        parsed_command = MessageParser().parse(message)
+        message = ChangePinNotification(True)
+        encoded_message = MessageEncoder().encode(message)
+        parsed_message = MessageParser().parse(encoded_message)
 
-        self.assertEqual(command, parsed_command)
+        self.assertEqual(message, parsed_message)
 
     def test_ResetPinNotification(self):
-        command = ResetPinNotification(True)
-        message = MessageEncoder().encode(command)
-        parsed_command = MessageParser().parse(message)
+        message = ResetPinNotification(True)
+        encoded_message = MessageEncoder().encode(message)
+        parsed_message = MessageParser().parse(encoded_message)
 
-        self.assertEqual(command, parsed_command)
+        self.assertEqual(message, parsed_message)
 
     def test_PowerSwitchNotification(self):
-        command = PowerSwitchNotification(True)
-        message = MessageEncoder().encode(command)
-        parsed_command = MessageParser().parse(message)
+        message = PowerSwitchNotification(True)
+        encoded_message = MessageEncoder().encode(message)
+        parsed_message = MessageParser().parse(encoded_message)
 
-        self.assertEqual(command, parsed_command)
+        self.assertEqual(message, parsed_message)
 
     def test_LEDSwitchNotification(self):
-        command = LEDSwitchNotification(True)
-        message = MessageEncoder().encode(command)
-        parsed_command = MessageParser().parse(message)
+        message = LEDSwitchNotification(True)
+        encoded_message = MessageEncoder().encode(message)
+        parsed_message = MessageParser().parse(encoded_message)
 
-        self.assertEqual(command, parsed_command)
+        self.assertEqual(message, parsed_message)
 
+    def test_SynchroizeDateAndTimeNotification(self):
+        message = SynchronizeDateAndTimeNotification(True)
+        encoded_message = MessageEncoder().encode(message)
+        parsed_message = MessageParser().parse(encoded_message)
 
+        self.assertEqual(message, parsed_message)
