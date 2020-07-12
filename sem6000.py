@@ -172,7 +172,7 @@ class SEM6000():
         self._peripheral.waitForNotifications(self.timeout)
 
 def _format_minutes_as_time(minutes):
-    hour = minutes // 24
+    hour = minutes // 60
     minute = minutes - hour*60
 
     return "{:02}:{:02}".format(hour, minute)
