@@ -21,13 +21,13 @@ class MessageEncoder():
 
     def encode(self, message):
         if isinstance(message, AuthorizeCommand):
-            encoded_pin = self._encode_pin(message.pin)
-            return self._encode_message(b'\x17\x00\x00' + encoded_pin + b'\x00\x00\x00\x00')
+            pin = self._encode_pin(message.pin)
+            return self._encode_message(b'\x17\x00\x00' + pin + b'\x00\x00\x00\x00')
 
         if isinstance(message, ChangePinCommand):
-            encoded_pin = self._encode_pin(message.pin)
-            encoded_new_pin = self._encode_pin(message.new_pin)
-            return self._encode_message(b'\x17\x00\x01' + encoded_new_pin + encoded_pin)
+            pin = self._encode_pin(message.pin)
+            new_pin = self._encode_pin(message.new_pin)
+            return self._encode_message(b'\x17\x00\x01' + new_pin + pin)
 
         if isinstance(message, ResetPinCommand):
             return self._encode_message(b'\x17\x00\x02' + b'\x00\x00\x00\x00\x00\x00\x00\x00')
@@ -45,15 +45,15 @@ class MessageEncoder():
                 return self._encode_message(b'\x0f\x00\x05\x00' + b'\x00\x00\x00\x00')
 
         if isinstance(message, SynchronizeDateAndTimeCommand):
-            encoded_year = message.year.to_bytes(2, 'big')
-            encoded_month = message.month.to_bytes(1, 'big')
-            encoded_day = message.day.to_bytes(1, 'big')
+            year = message.year.to_bytes(2, 'big')
+            month = message.month.to_bytes(1, 'big')
+            day = message.day.to_bytes(1, 'big')
 
-            encoded_hour = message.hour.to_bytes(1, 'big')
-            encoded_minute = message.minute.to_bytes(1, 'big')
-            encoded_second = message.second.to_bytes(1, 'big')
+            hour = message.hour.to_bytes(1, 'big')
+            minute = message.minute.to_bytes(1, 'big')
+            second = message.second.to_bytes(1, 'big')
 
-            return self._encode_message(b'\x01\x00' + encoded_second + encoded_minute + encoded_hour + encoded_day + encoded_month + encoded_year + b'\x00\x00')
+            return self._encode_message(b'\x01\x00' + second + minute + hour + day + month + year + b'\x00\x00')
 
         if isinstance(message, AuthorizationNotification):
             was_successful = b'\x01'
