@@ -105,12 +105,12 @@ class MessageParser:
             reduced_mode_start_in_minutes = int.from_bytes(payload[5:7], 'big')
             reduced_mode_end_in_minutes = int.from_bytes(payload[7:9], 'big')
 
-            is_led_on = False
+            is_led_active = False
             if payload[9:10] == b'\x01':
-                is_led_on = True
+                is_led_active = True
 
             power_limit_in_watt = int.from_bytes(payload[11:13], 'big')
 
-            return RequestedSettingsNotification(is_reduced_mode_active=is_reduced_mode_active, normal_price_in_cent=normal_price_in_cent, reduced_price_in_cent=reduced_price_in_cent, reduced_mode_start_in_minutes=reduced_mode_start_in_minutes, reduced_mode_end_in_minutes=reduced_mode_end_in_minutes, is_led_on=is_led_on, power_limit_in_watt=power_limit_in_watt)
+            return RequestedSettingsNotification(is_reduced_mode_active=is_reduced_mode_active, normal_price_in_cent=normal_price_in_cent, reduced_price_in_cent=reduced_price_in_cent, reduced_mode_start_in_minutes=reduced_mode_start_in_minutes, reduced_mode_end_in_minutes=reduced_mode_end_in_minutes, is_led_active=is_led_active, power_limit_in_watt=power_limit_in_watt)
 
         raise Exception('Unsupported message')

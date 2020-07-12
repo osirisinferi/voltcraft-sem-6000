@@ -223,7 +223,7 @@ if __name__ == '__main__':
             print("\tRecuced mode start:\t{} minutes ({})".format(response.reduced_mode_start_in_minutes, _format_minutes_as_time(response.reduced_mode_start_in_minutes)))
             print("\tRecuced mode end:\t{} minutes ({})".format(response.reduced_mode_end_in_minutes, _format_minutes_as_time(response.reduced_mode_end_in_minutes)))
 
-            if response.is_led_on:
+            if response.is_led_active:
                 print("\tLED state;\t\tOn")
             else:
                 print("\tLED state;\t\tOff")
