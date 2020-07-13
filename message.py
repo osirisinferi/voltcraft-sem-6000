@@ -85,6 +85,16 @@ class SetPowerLimitCommand(AbstractCommand):
         return command_name + "(power_limit_in_watt=" + str(self.power_limit_in_watt) + ")"
 
 
+class SetPricesCommand(AbstractCommand):
+    def __init__(self, normal_price_in_cent, reduced_price_in_cent):
+        self.normal_price_in_cent = normal_price_in_cent
+        self.reduced_price_in_cent = reduced_price_in_cent
+
+    def __str__(self):
+        command_name = self.__class__.__name__
+        return command_name + "(normal_price_in_cent=" + str(self.normal_price_in_cent) + ", reduced_price_in_cent=" + str(self.reduced_price_in_cent) + ")"
+
+
 class AuthorizationNotification(AbstractCommandConfirmationNotification):
     pass
 
@@ -125,4 +135,8 @@ class RequestedSettingsNotification:
 
 
 class PowerLimitSetNotification(AbstractCommandConfirmationNotification):
+    pass
+
+
+class PricesSetNotification(AbstractCommandConfirmationNotification):
     pass

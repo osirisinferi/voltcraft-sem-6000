@@ -172,6 +172,16 @@ class SEM6000():
 
         return notification
 
+    def set_prices(self, normal_price_in_cent, reduced_price_in_cent):
+        command = SetPricesCommand(normal_price_in_cent=int(normal_price_in_cent), reduced_price_in_cent=int(reduced_price_in_cent))
+        self._send_command(command)
+        notification = self._delegate.last_notification
+
+        if not isinstance(notification, PricesSetNotification):
+            raise Exception("Set prices failed")
+
+        return notification
+
     def _send_command(self, command):
         encoded_command = self._encoder.encode(command)
 
@@ -241,5 +251,6 @@ if __name__ == '__main__':
             print("\tPower limit:\t\t{} W".format(response.power_limit_in_watt))
         if cmd == 'set_power_limit':
             sem6000.set_power_limit(power_limit_in_watt=sys.argv[4])
-            
+        if cmd == 'set_prices':
+            sem6000.set_prices(normal_price_in_cent=sys.argv[4], reduced_price_in_cent=sys.argv[5])
 

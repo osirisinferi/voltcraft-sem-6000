@@ -115,7 +115,12 @@ class MessageParser:
 
         if payload[0:3] == b'\x05\x00\x00' and len(payload) == 3:
             return PowerLimitSetNotification(was_successful=True)
-            
-             
+
+        if payload[0:3] == b'\x0f\x00\x04':
+            if len(payload) != 4:
+                raise InvalidPayloadLengthException(message_class=PricesSetNotification.__class__, expected_payload_length=4, actual_payload_length=len(payload))
+
+            return PricesSetNotification(was_successful=True)
+
 
         raise Exception('Unsupported message')

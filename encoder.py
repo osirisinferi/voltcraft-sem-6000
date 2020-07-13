@@ -60,7 +60,14 @@ class MessageEncoder():
 
         if isinstance(message, SetPowerLimitCommand):
             power_limit_in_watt = message.power_limit_in_watt.to_bytes(2, 'big')
+
             return self._encode_message(b'\x05\x00' + power_limit_in_watt + b'\x00\x00')
+
+        if isinstance(message, SetPricesCommand):
+            normal_price_in_cent = message.normal_price_in_cent.to_bytes(1, 'big')
+            reduced_price_in_cent = message.reduced_price_in_cent.to_bytes(1, 'big')
+
+            return self._encode_message(b'\x0f\x00\x04' + normal_price_in_cent + reduced_price_in_cent + b'\x00\x00\x00\x00')
 
         if isinstance(message, AuthorizationNotification):
             was_successful = b'\x01'
@@ -121,6 +128,9 @@ class MessageEncoder():
 
         if isinstance(message, PowerLimitSetNotification):
             return self._encode_message(b'\x05\x00' + b'\x00')
+
+        if isinstance(message, PricesSetNotification):
+            return self._encode_message(b'\x0f\x00\x04' + b'\x00')
 
 
         raise Exception('Unsupported message ' + str(message))
