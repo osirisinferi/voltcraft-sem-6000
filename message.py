@@ -76,6 +76,15 @@ class RequestSettingsCommand(AbstractCommand):
     pass
 
 
+class SetPowerLimitCommand(AbstractCommand):
+    def __init__(self, power_limit_in_watt):
+        self.power_limit_in_watt = power_limit_in_watt 
+
+    def __str__(self):
+        command_name = self.__class__.__name__
+        return command_name + "(power_limit_in_watt=" + str(self.power_limit_in_watt) + ")"
+
+
 class AuthorizationNotification(AbstractCommandConfirmationNotification):
     pass
 
@@ -114,3 +123,6 @@ class RequestedSettingsNotification:
         command_name = self.__class__.__name__
         return command_name + "(is_reduced_mode_active=" + str(self.is_reduced_mode_active) + ", normal_price_in_cent=" + str(self.normal_price_in_cent) + ", reduced_price_in_cent=" + str(self.reduced_price_in_cent) + ", reduced_mode_start_in_minutes=" + str(self.reduced_mode_start_in_minutes) + ", reduced_mode_end_in_minutes=" + str(self.reduced_mode_end_in_minutes) + ", is_led_active=" + str(self.is_led_active) + ", power_limit_in_watt=" + str(self.power_limit_in_watt) + ")"
 
+
+class PowerLimitSetNotification(AbstractCommandConfirmationNotification):
+    pass

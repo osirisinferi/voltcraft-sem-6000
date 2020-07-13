@@ -113,4 +113,9 @@ class MessageParser:
 
             return RequestedSettingsNotification(is_reduced_mode_active=is_reduced_mode_active, normal_price_in_cent=normal_price_in_cent, reduced_price_in_cent=reduced_price_in_cent, reduced_mode_start_in_minutes=reduced_mode_start_in_minutes, reduced_mode_end_in_minutes=reduced_mode_end_in_minutes, is_led_active=is_led_active, power_limit_in_watt=power_limit_in_watt)
 
+        if payload[0:3] == b'\x05\x00\x00' and len(payload) == 3:
+            return PowerLimitSetNotification(was_successful=True)
+            
+             
+
         raise Exception('Unsupported message')

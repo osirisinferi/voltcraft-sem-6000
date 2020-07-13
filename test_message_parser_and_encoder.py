@@ -60,3 +60,10 @@ class MessagesTest(unittest.TestCase):
         self.assertEqual(True, parsed_message.is_led_active, 'is_led_active value differs')
         self.assertEqual(500, parsed_message.power_limit_in_watt, 'power_limit_in_watt value differs')
 
+    def test_PowerLimitSetNotification(self):
+        message = PowerLimitSetNotification(was_successful=True)
+        encoded_message = MessageEncoder().encode(message)
+        parsed_message = MessageParser().parse(encoded_message)
+
+        self.assertEqual(True, parsed_message.was_successful, 'was_successful value differs')
+

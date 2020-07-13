@@ -58,6 +58,10 @@ class MessageEncoder():
         if isinstance(message, RequestSettingsCommand):
             return self._encode_message(b'\x10\x00' + b'\x00\x00')
 
+        if isinstance(message, SetPowerLimitCommand):
+            power_limit_in_watt = message.power_limit_in_watt.to_bytes(2, 'big')
+            return self._encode_message(b'\x05\x00' + power_limit_in_watt + b'\x00\x00')
+
         if isinstance(message, AuthorizationNotification):
             was_successful = b'\x01'
             if message.was_successful:
@@ -114,6 +118,9 @@ class MessageEncoder():
             power_limit_in_watt = message.power_limit_in_watt.to_bytes(2, 'big')
 
             return self._encode_message(b'\x10\x00' + is_reduced_mode_active + normal_price_in_cent + reduced_price_in_cent + reduced_mode_start_in_minutes + reduced_mode_end_in_minutes + is_led_active + b'\x00' + power_limit_in_watt)
+
+        if isinstance(message, PowerLimitSetNotification):
+            return self._encode_message(b'\x05\x00' + b'\x00')
 
 
         raise Exception('Unsupported message ' + str(message))
