@@ -141,14 +141,15 @@ class SEM6000():
 
         return notification
 
-    def synchronize_date_and_time(self, isodatetime):
+    def set_date_and_time(self, isodatetime):
         date_and_time = datetime.datetime.fromisoformat(isodatetime)
+
         command = SynchronizeDateAndTimeCommand(date_and_time.year, date_and_time.month, date_and_time.day, date_and_time.hour, date_and_time.minute, date_and_time.second)
         self._send_command(command)
         notification = self._delegate.last_notification
 
         if not isinstance(notification, SynchronizeDateAndTimeNotification) or not notification.was_successful:
-            raise Exception("Synchronize date and time failed")
+            raise Exception("Set date and time failed")
 
         return notification
 
@@ -247,8 +248,10 @@ if __name__ == '__main__':
             sem6000.led_on()
         if cmd == 'led_off':
             sem6000.led_off()
+        if cmd == 'set_date_and_time':
+            sem6000.set_date_and_time(sys.argv[4])
         if cmd == 'synchronize_date_and_time':
-            sem6000.synchronize_date_and_time(sys.argv[4])
+            sem6000.set_date_and_time(datetime.datetime.now().isoformat())
         if cmd == 'request_settings':
             response = sem6000.request_settings()
             assert isinstance(response, RequestedSettingsNotification)
