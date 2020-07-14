@@ -192,6 +192,12 @@ class SEM6000():
 
         command = SetReducedPeriodCommand(is_active=_parse_boolean(is_active), start_time_in_minutes=start_time_in_minutes, end_time_in_minutes=end_time_in_minutes)
         self._send_command(command)
+        notification = self._delegate.last_notification
+
+        if not isinstance(notification, ReducedPeriodSetNotification):
+            raise Exception("Set reduced period failed")
+
+        return notification
 
     def _send_command(self, command):
         encoded_command = self._encoder.encode(command)
