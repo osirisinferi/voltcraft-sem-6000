@@ -182,6 +182,16 @@ class SEM6000():
 
         return notification
 
+    def set_reduced_period(self, is_active, start_isotime, end_isotime):
+        start_time = datetime.time.fromisoformat(start_isotime)
+        end_time = datetime.time.fromisoformat(end_isotime)
+
+        start_time_in_minutes = start_time.hour*60 + start_time.minute
+        end_time_in_minutes = end_time.hour*60 + end_time.minute
+
+        command = SetReducedPeriodCommand(is_active=_parse_boolean(is_active), start_time_in_minutes=start_time_in_minutes, end_time_in_minutes=end_time_in_minutes)
+        self._send_command(command)
+
     def _send_command(self, command):
         encoded_command = self._encoder.encode(command)
 
@@ -196,6 +206,18 @@ def _format_minutes_as_time(minutes):
     minute = minutes - hour*60
 
     return "{:02}:{:02}".format(hour, minute)
+
+def _parse_boolean(boolean_string):
+    boolean_value = False
+
+    if str(boolean_string).lower() == "true":
+        boolean_value = True
+    if str(boolean_string).lower() == "on":
+        boolean_value = True
+    if str(boolean_string).lower() == "1":
+        boolean_value = True
+
+    return boolean_value
 
 
 if __name__ == '__main__':
@@ -240,8 +262,8 @@ if __name__ == '__main__':
             print("\tNormal price:\t\t{:.2f} EUR".format(response.normal_price_in_cent/100))
             print("\tReduced price:\t\t{:.2f} EUR".format(response.reduced_price_in_cent/100))
 
-            print("\tRecuced mode start:\t{} minutes ({})".format(response.reduced_mode_start_in_minutes, _format_minutes_as_time(response.reduced_mode_start_in_minutes)))
-            print("\tRecuced mode end:\t{} minutes ({})".format(response.reduced_mode_end_in_minutes, _format_minutes_as_time(response.reduced_mode_end_in_minutes)))
+            print("\tRecuced mode start:\t{} minutes ({})".format(response.reduced_mode_start_time_in_minutes, _format_minutes_as_time(response.reduced_mode_start_time_in_minutes)))
+            print("\tRecuced mode end:\t{} minutes ({})".format(response.reduced_mode_end_time_in_minutes, _format_minutes_as_time(response.reduced_mode_end_time_in_minutes)))
 
             if response.is_led_active:
                 print("\tLED state;\t\tOn")
@@ -253,4 +275,5 @@ if __name__ == '__main__':
             sem6000.set_power_limit(power_limit_in_watt=sys.argv[4])
         if cmd == 'set_prices':
             sem6000.set_prices(normal_price_in_cent=sys.argv[4], reduced_price_in_cent=sys.argv[5])
-
+        if cmd == 'set_reduced_period':
+            sem6000.set_reduced_period(is_active=sys.argv[4], start_isotime=sys.argv[5], end_isotime=sys.argv[6])

@@ -95,6 +95,17 @@ class SetPricesCommand(AbstractCommand):
         return command_name + "(normal_price_in_cent=" + str(self.normal_price_in_cent) + ", reduced_price_in_cent=" + str(self.reduced_price_in_cent) + ")"
 
 
+class SetReducedPeriodCommand(AbstractCommand):
+    def __init__(self, is_active, start_time_in_minutes, end_time_in_minutes):
+        self.is_active = is_active
+        self.start_time_in_minutes = start_time_in_minutes
+        self.end_time_in_minutes = end_time_in_minutes
+
+    def __str__(self):
+        command_name = self.__class__.__name__
+        return command_name + "(is_active=" + str(self.is_active) + ", start_time_in_minutes=" + str(self.start_time_in_minutes) + ", end_time_in_minutes=" + str(self.end_time_in_minutes) + ")"
+
+
 class AuthorizationNotification(AbstractCommandConfirmationNotification):
     pass
 
@@ -120,18 +131,18 @@ class SynchronizeDateAndTimeNotification(AbstractCommandConfirmationNotification
 
 
 class RequestedSettingsNotification:
-    def __init__(self, is_reduced_mode_active, normal_price_in_cent, reduced_price_in_cent, reduced_mode_start_in_minutes, reduced_mode_end_in_minutes, is_led_active, power_limit_in_watt):
+    def __init__(self, is_reduced_mode_active, normal_price_in_cent, reduced_price_in_cent, reduced_mode_start_time_in_minutes, reduced_mode_end_time_in_minutes, is_led_active, power_limit_in_watt):
         self.is_reduced_mode_active = is_reduced_mode_active
         self.normal_price_in_cent = normal_price_in_cent
         self.self = self.reduced_price_in_cent = reduced_price_in_cent
-        self.reduced_mode_start_in_minutes = reduced_mode_start_in_minutes
-        self.reduced_mode_end_in_minutes = reduced_mode_end_in_minutes
+        self.reduced_mode_start_time_in_minutes = reduced_mode_start_time_in_minutes
+        self.reduced_mode_end_time_in_minutes = reduced_mode_end_time_in_minutes
         self.is_led_active = is_led_active
         self.power_limit_in_watt = power_limit_in_watt
 
     def __str__(self):
         command_name = self.__class__.__name__
-        return command_name + "(is_reduced_mode_active=" + str(self.is_reduced_mode_active) + ", normal_price_in_cent=" + str(self.normal_price_in_cent) + ", reduced_price_in_cent=" + str(self.reduced_price_in_cent) + ", reduced_mode_start_in_minutes=" + str(self.reduced_mode_start_in_minutes) + ", reduced_mode_end_in_minutes=" + str(self.reduced_mode_end_in_minutes) + ", is_led_active=" + str(self.is_led_active) + ", power_limit_in_watt=" + str(self.power_limit_in_watt) + ")"
+        return command_name + "(is_reduced_mode_active=" + str(self.is_reduced_mode_active) + ", normal_price_in_cent=" + str(self.normal_price_in_cent) + ", reduced_price_in_cent=" + str(self.reduced_price_in_cent) + ", reduced_mode_start_time_in_minutes=" + str(self.reduced_mode_start_time_in_minutes) + ", reduced_mode_end_time_in_minutes=" + str(self.reduced_mode_end_time_in_minutes) + ", is_led_active=" + str(self.is_led_active) + ", power_limit_in_watt=" + str(self.power_limit_in_watt) + ")"
 
 
 class PowerLimitSetNotification(AbstractCommandConfirmationNotification):
@@ -140,3 +151,8 @@ class PowerLimitSetNotification(AbstractCommandConfirmationNotification):
 
 class PricesSetNotification(AbstractCommandConfirmationNotification):
     pass
+
+
+class ReducedPeriodSetNotification(AbstractCommandConfirmationNotification):
+    pass
+
