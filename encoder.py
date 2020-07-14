@@ -79,6 +79,25 @@ class MessageEncoder():
 
             return self._encode_message(b'\x0f\x00\x01' + is_active + start_time_in_minutes + end_time_in_minutes)
 
+        if isinstance(message, RequestTimerStatusCommand):
+            return self._encode_message(b'\x09\x00\x00' + b'\x00')
+
+        if isinstance(message, SetTimerCommand):
+            timer_action = b'\x00'
+            if not message.is_reset_timer:
+                timer_action = b'\x02'
+                if message.is_action_turn_on:
+                    timer_action = b'\x01'
+
+            target_second = message.target_second.to_bytes(1, 'big')
+            target_minute = message.target_minute.to_bytes(1, 'big')
+            target_hour = message.target_hour.to_bytes(1, 'big')
+            target_day = message.target_day.to_bytes(1, 'big')
+            target_month = message.target_month.to_bytes(1, 'big')
+            target_year = message.target_year.to_bytes(1, 'big')
+
+            return self._encode_message(b'\x08\x00' + timer_action + target_second + target_minute + target_hour + target_day + target_month + target_year + b'\x00\x00')
+
         if isinstance(message, AuthorizationNotification):
             was_successful = b'\x01'
             if message.was_successful:
@@ -144,6 +163,27 @@ class MessageEncoder():
 
         if isinstance(message, ReducedPeriodSetNotification):
             return self._encode_message(b'\x0f\x00\x01' + b'\x00')
+
+        if isinstance(message, RequestedTimerStatusNotification):
+            timer_action = b'\x00'
+            if message.is_timer_running:
+                timer_action = b'\x02'
+                if message.is_action_turn_on:
+                    timer_action = b'\x01'
+
+            target_second = message.target_second.to_bytes(1, 'big')
+            target_minute = message.target_minute.to_bytes(1, 'big')
+            target_hour = message.target_hour.to_bytes(1, 'big')
+            target_day = message.target_day.to_bytes(1, 'big')
+            target_month = message.target_month.to_bytes(1, 'big')
+            target_year = message.target_year.to_bytes(1, 'big')
+
+            original_timer_length_in_seconds = message.original_timer_length_in_seconds.to_bytes(3, 'big')
+
+            return self._encode_message(b'\x09\x00' + timer_action + target_second + target_minute + target_hour + target_day + target_month + target_year + original_timer_length_in_seconds + b'\x00')
+
+        if isinstance(message, TimerSetNotification):
+            return self._encode_message(b'\x08\x00\x00')
 
         raise Exception('Unsupported message ' + str(message))
 

@@ -128,4 +128,33 @@ class MessageParser:
 
             return ReducedPeriodSetNotification(was_successful=True)
 
+        if payload[0:2] == b'\x09\x00':
+            if len(payload) != 13:
+                raise InvalidPayloadLengthException(message_class=RequestedTimerStatusNotification.__class__, expected_payload_length=13, actual_payload_length=len(payload))
+
+            is_timer_running = True
+            is_action_turn_on = False
+
+            if payload[2:3] == b'\x01':
+                is_action_turn_on = True
+            if payload[2:3] == b'\x00':
+                is_timer_running = False
+
+            target_second = payload[3]
+            target_minute = payload[4]
+            target_hour = payload[5]
+            target_day = payload[6]
+            target_month = payload[7]
+            target_year = payload[8]
+
+            original_timer_length_in_seconds = int.from_bytes(payload[9:12], 'big')
+
+            return RequestedTimerStatusNotification(is_timer_running=is_timer_running, is_action_turn_on=is_action_turn_on, target_second=target_second, target_minute=target_minute, target_hour=target_hour, target_day=target_day, target_month=target_month, target_year=target_year, original_timer_length_in_seconds=original_timer_length_in_seconds)
+
+        if payload[0:2] == b'\x08\x00':
+            if len(payload) != 3:
+                raise InvalidPayloadLengthException(message_class=TimerSetNotification, expected_payload_length=3, actual_payload_length=len(payload))
+
+            return TimerSetNotification(was_successful=True)
+
         raise Exception('Unsupported message')

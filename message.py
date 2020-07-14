@@ -76,7 +76,7 @@ class RequestSettingsCommand(AbstractCommand):
     pass
 
 
-class SetPowerLimitCommand(AbstractCommand):
+class SetPowerLimitCommand():
     def __init__(self, power_limit_in_watt):
         self.power_limit_in_watt = power_limit_in_watt 
 
@@ -85,7 +85,7 @@ class SetPowerLimitCommand(AbstractCommand):
         return command_name + "(power_limit_in_watt=" + str(self.power_limit_in_watt) + ")"
 
 
-class SetPricesCommand(AbstractCommand):
+class SetPricesCommand():
     def __init__(self, normal_price_in_cent, reduced_price_in_cent):
         self.normal_price_in_cent = normal_price_in_cent
         self.reduced_price_in_cent = reduced_price_in_cent
@@ -95,7 +95,7 @@ class SetPricesCommand(AbstractCommand):
         return command_name + "(normal_price_in_cent=" + str(self.normal_price_in_cent) + ", reduced_price_in_cent=" + str(self.reduced_price_in_cent) + ")"
 
 
-class SetReducedPeriodCommand(AbstractCommand):
+class SetReducedPeriodCommand():
     def __init__(self, is_active, start_time_in_minutes, end_time_in_minutes):
         self.is_active = is_active
         self.start_time_in_minutes = start_time_in_minutes
@@ -104,6 +104,26 @@ class SetReducedPeriodCommand(AbstractCommand):
     def __str__(self):
         command_name = self.__class__.__name__
         return command_name + "(is_active=" + str(self.is_active) + ", start_time_in_minutes=" + str(self.start_time_in_minutes) + ", end_time_in_minutes=" + str(self.end_time_in_minutes) + ")"
+
+
+class RequestTimerStatusCommand(AbstractCommand):
+    pass
+
+
+class SetTimerCommand:
+    def __init__(self, is_reset_timer, is_action_turn_on, target_second, target_minute, target_hour, target_day, target_month, target_year):
+        self.is_reset_timer = is_reset_timer
+        self.is_action_turn_on = is_action_turn_on
+        self.target_second = target_second
+        self.target_minute = target_minute
+        self.target_hour = target_hour
+        self.target_day = target_day
+        self.target_month = target_month
+        self.target_year = target_year
+
+    def __str__(self):
+        command_name = self.__class__.__name__
+        return command_name + "(is_reset_timer=" + str(self.is_reset_timer) + ", is_action_turn_on=" + str(self.is_action_turn_on) + ", target_second=" + str(self.target_second) + ", target_minute=" + str(self.target_minute) + ", target_hour=" + str(self.target_hour) + ", target_day=" + str(self.target_day) + ", target_month=" + str(self.target_month) + ", target_year=" + str(self.target_year) + ")"
 
 
 class AuthorizationNotification(AbstractCommandConfirmationNotification):
@@ -156,3 +176,23 @@ class PricesSetNotification(AbstractCommandConfirmationNotification):
 class ReducedPeriodSetNotification(AbstractCommandConfirmationNotification):
     pass
 
+
+class RequestedTimerStatusNotification:
+    def __init__(self, is_timer_running, is_action_turn_on, target_second, target_minute, target_hour, target_day, target_month, target_year, original_timer_length_in_seconds):
+        self.is_timer_running = is_timer_running
+        self.is_action_turn_on = is_action_turn_on
+        self.target_second = target_second
+        self.target_minute = target_minute
+        self.target_hour = target_hour
+        self.target_day = target_day
+        self.target_month = target_month
+        self.target_year = target_year
+        self.original_timer_length_in_seconds = original_timer_length_in_seconds
+
+    def __str__(self):
+        command_name = self.__class__.__name__
+        return command_name + "(is_action_turn_on=" + str(self.is_action_turn_on) + ", target_second=" + str(self.target_second) + ", target_minute=" + str(self.target_minute) + ", target_hour=" + str(self.target_hour) + ", target_day=" + str(self.target_day) + ", target_month=" + str(self.target_month) + ", target_year=" + str(self.target_year) + ", original_timer_length_in_seconds=" + str(self.original_timer_length_in_seconds) + ")"
+
+
+class TimerSetNotification(AbstractCommandConfirmationNotification):
+    pass

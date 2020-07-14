@@ -199,6 +199,31 @@ class SEM6000():
 
         return notification
 
+    def request_timer_status(self):
+        command = RequestTimerStatusCommand()
+        self._send_command(command)
+        notification = self._delegate.last_notification
+
+        if not isinstance(notification, RequestedTimerStatusNotification):
+            raise Exception("Request timer status failed")
+
+        return notification
+
+    def set_timer(self, is_reset_timer, is_action_turn_on, delay_isotime):
+        time = datetime.time.fromisoformat(delay_isotime)
+        timedelta = datetime.timedelta(hours=time.hour, minutes=time.minute, seconds=time.second)
+        dt = datetime.datetime.now() + timedelta
+        dt = datetime.datetime(dt.year % 100, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+
+        command = SetTimerCommand(is_reset_timer=_parse_boolean(is_reset_timer), is_action_turn_on=_parse_boolean(is_action_turn_on), target_second=dt.second, target_minute=dt.minute, target_hour=dt.hour, target_day=dt.day, target_month=dt.month, target_year=dt.year)
+        self._send_command(command)
+        notification = self._delegate.last_notification
+
+        if not isinstance(notification, TimerSetNotification):
+            raise Exception("Set timer failed")
+
+        return notification
+
     def _send_command(self, command):
         encoded_command = self._encoder.encode(command)
 
@@ -286,3 +311,31 @@ if __name__ == '__main__':
             sem6000.set_prices(normal_price_in_cent=sys.argv[4], reduced_price_in_cent=sys.argv[5])
         if cmd == 'set_reduced_period':
             sem6000.set_reduced_period(is_active=sys.argv[4], start_isotime=sys.argv[5], end_isotime=sys.argv[6])
+        if cmd == 'request_timer_status':
+            response = sem6000.request_timer_status()
+            assert isinstance(response, RequestedTimerStatusNotification)
+
+            now = datetime.datetime.now()
+            now = datetime.datetime(now.year % 100, now.month, now.day, now.hour, now.minute, now.second)
+
+            original_timer_length = datetime.timedelta(seconds=response.original_timer_length_in_seconds)
+
+            print("Timer Status:")
+            if response.is_timer_running:
+                dt = datetime.datetime(response.target_year, response.target_month, response.target_day, response.target_hour, response.target_minute, response.target_second)
+                time_left = (dt - now)
+
+                print("\tTimer state:\t\tOn")
+                print("\tTime left:\t\t" + str(time_left))
+                if response.is_action_turn_on:
+                    print("\tAction:\t\t\tTurn On")
+                else:
+                    print("\tAction:\t\t\tTurn Off")
+            else:
+                print("\tTimer state:\t\tOff")
+
+            print("\tOriginal timer length:\t" + str(original_timer_length))
+        if cmd == 'set_timer':
+            sem6000.set_timer(False, sys.argv[4], sys.argv[5])
+        if cmd == 'reset_timer':
+            sem6000.set_timer(True, False, "00:00")
