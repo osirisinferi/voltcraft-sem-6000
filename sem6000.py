@@ -18,21 +18,50 @@ class SEM6000Delegate(btle.DefaultDelegate):
         if debug:
             self.debug = True
 
-        self.last_notification = None
+        self._raw_notifications = []
 
         self._parser = parser.MessageParser()
 
     def handleNotification(self, cHandle, data):
+        self._raw_notifications.append(data)
+
+    def has_final_raw_notification(self):
+        if len(self._raw_notifications) == 0:
+            return False
+
+        last_notification = self._raw_notifications[-1]
+
+        if len(last_notification) < 2:
+            return False
+
+        return ( last_notification[-2:] == b'\xff\xff' )
+
+    def consume_notification(self):
         exception = None
+        notification = None
+
+        data = b''
+        for n in self._raw_notifications:
+            data += n
+
         try:
-            self.last_notification = self._parser.parse(data)
+            if not self.has_final_raw_notification():
+                raise Exception("Incomplete notification data")
+
+            notification = self._parser.parse(data)
         except Exception as e:
             if self.debug:
-                print("received data from handle " + str(cHandle) + ": " + str(binascii.hexlify(data)) + " (Unknown Notification)", file=sys.stderr)
+                print("received data: " + str(binascii.hexlify(data)) + " (Unknown Notification)", file=sys.stderr)
             raise e
 
         if self.debug:
-            print("received data from handle " + str(cHandle) + ": " + str(binascii.hexlify(data)) + " (" + str(self.last_notification) + ")", file=sys.stderr)
+            print("received data: " + str(binascii.hexlify(data)) + " (" + str(notification) + ")", file=sys.stderr)
+
+
+        while len(self._raw_notifications):
+            self._raw_notifications.pop(0)
+
+        return notification
 
 
 class SEM6000():
@@ -49,6 +78,23 @@ class SEM6000():
         self._delegate = SEM6000Delegate(self.debug)
         self._peripheral = btle.Peripheral(deviceAddr=deviceAddr, addrType=btle.ADDR_TYPE_PUBLIC, iface=iface).withDelegate(self._delegate)
         self._characteristics = self._peripheral.getCharacteristics(uuid='0000fff3-0000-1000-8000-00805f9b34fb')[0]
+
+    def _send_command(self, command):
+        encoded_command = self._encoder.encode(command)
+
+        if self.debug:
+            print("sent data: " + str(binascii.hexlify(encoded_command)) + " (" + str(command) + ")", file=sys.stderr)
+
+        self._characteristics.write(encoded_command)
+        self._wait_for_notifications()
+
+    def _wait_for_notifications(self):
+        while True:
+            if not self._peripheral.waitForNotifications(self.timeout):
+                break
+
+            if self._delegate.has_final_raw_notification():
+                break 
 
     def discover(timeout=10):
         result = []
@@ -74,7 +120,7 @@ class SEM6000():
     def authorize(self):
         command = AuthorizeCommand(self.pin)
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
 
         if not isinstance(notification, AuthorizationNotification) or not notification.was_successful:
             raise Exception("Authentication failed")
@@ -84,7 +130,7 @@ class SEM6000():
     def change_pin(self, new_pin):
         command = ChangePinCommand(self.pin, new_pin)
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
 
         if not isinstance(notification, ChangePinNotification) or not notification.was_successful:
             raise Exception("Change PIN failed")
@@ -94,7 +140,7 @@ class SEM6000():
     def reset_pin(self):
         command = ResetPinCommand()
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
 
         if not isinstance(notification, ResetPinNotification) or not notification.was_successful:
             raise Exception("Reset PIN failed")
@@ -104,7 +150,7 @@ class SEM6000():
     def power_on(self):
         command = PowerSwitchCommand(True)
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
         
         if not isinstance(notification, PowerSwitchNotification) or not notification.was_successful:
             raise Exception("Power on failed")
@@ -114,7 +160,7 @@ class SEM6000():
     def power_off(self):
         command = PowerSwitchCommand(False)
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
         
         if not isinstance(notification, PowerSwitchNotification) or not notification.was_successful:
             raise Exception("Power off failed")
@@ -124,7 +170,7 @@ class SEM6000():
     def led_on(self):
         command = LEDSwitchCommand(True)
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
         
         if not isinstance(notification, LEDSwitchNotification) or not notification.was_successful:
             raise Exception("LED on failed")
@@ -134,7 +180,7 @@ class SEM6000():
     def led_off(self):
         command = LEDSwitchCommand(False)
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
         
         if not isinstance(notification, LEDSwitchNotification) or not notification.was_successful:
             raise Exception("LED off failed")
@@ -146,7 +192,7 @@ class SEM6000():
 
         command = SynchronizeDateAndTimeCommand(date_and_time.year, date_and_time.month, date_and_time.day, date_and_time.hour, date_and_time.minute, date_and_time.second)
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
 
         if not isinstance(notification, SynchronizeDateAndTimeNotification) or not notification.was_successful:
             raise Exception("Set date and time failed")
@@ -156,7 +202,7 @@ class SEM6000():
     def request_settings(self):
         command = RequestSettingsCommand()
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
 
         if not isinstance(notification, RequestedSettingsNotification):
             raise Exception("Request settings failed")
@@ -166,7 +212,7 @@ class SEM6000():
     def set_power_limit(self, power_limit_in_watt):
         command = SetPowerLimitCommand(power_limit_in_watt=int(power_limit_in_watt))
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
 
         if not isinstance(notification, PowerLimitSetNotification):
             raise Exception("Set power limit failed")
@@ -176,7 +222,7 @@ class SEM6000():
     def set_prices(self, normal_price_in_cent, reduced_price_in_cent):
         command = SetPricesCommand(normal_price_in_cent=int(normal_price_in_cent), reduced_price_in_cent=int(reduced_price_in_cent))
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
 
         if not isinstance(notification, PricesSetNotification):
             raise Exception("Set prices failed")
@@ -192,7 +238,7 @@ class SEM6000():
 
         command = SetReducedPeriodCommand(is_active=_parse_boolean(is_active), start_time_in_minutes=start_time_in_minutes, end_time_in_minutes=end_time_in_minutes)
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
 
         if not isinstance(notification, ReducedPeriodSetNotification):
             raise Exception("Set reduced period failed")
@@ -202,7 +248,7 @@ class SEM6000():
     def request_timer_status(self):
         command = RequestTimerStatusCommand()
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
 
         if not isinstance(notification, RequestedTimerStatusNotification):
             raise Exception("Request timer status failed")
@@ -217,21 +263,13 @@ class SEM6000():
 
         command = SetTimerCommand(is_reset_timer=_parse_boolean(is_reset_timer), is_action_turn_on=_parse_boolean(is_action_turn_on), target_second=dt.second, target_minute=dt.minute, target_hour=dt.hour, target_day=dt.day, target_month=dt.month, target_year=dt.year)
         self._send_command(command)
-        notification = self._delegate.last_notification
+        notification = self._delegate.consume_notification()
 
         if not isinstance(notification, TimerSetNotification):
             raise Exception("Set timer failed")
 
         return notification
 
-    def _send_command(self, command):
-        encoded_command = self._encoder.encode(command)
-
-        if self.debug:
-            print("sent data: " + str(binascii.hexlify(encoded_command)) + " (" + str(command) + ")", file=sys.stderr)
-
-        self._characteristics.write(encoded_command)
-        self._peripheral.waitForNotifications(self.timeout)
 
 def _format_minutes_as_time(minutes):
     hour = minutes // 60
