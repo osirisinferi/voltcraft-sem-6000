@@ -36,7 +36,7 @@ set DELAY 100
 
 set timeout 3
 
-set MAC_PATTERN                "\[0-9A-F]{2}:\[0-9A-F]{2}:\[0-9A-F]{2}:\[0-9A-F]{2}:\[0-9A-F]{2}:\[0-9A-F]{2}"
+set MAC_PATTERN                "\[0-9a-fA-F]{2}:\[0-9a-fA-F]{2}:\[0-9a-fA-F]{2}:\[0-9a-fA-F]{2}:\[0-9a-fA-F]{2}:\[0-9a-fA-F]{2}"
 set WEEKDAYS                   "SMTWTFS"
 set KNOWN_SEMS_FILE            "~/.known_sem6"
 
